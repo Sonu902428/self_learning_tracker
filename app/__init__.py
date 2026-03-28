@@ -58,6 +58,6 @@ def create_app(config_class=Config):
 
     with app.app_context():
         from app import models  # noqa
-        # db.create_all()
+        db.create_all()
 
     return app
