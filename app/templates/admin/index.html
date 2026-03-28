@@ -1,0 +1,65 @@
+{% extends 'admin/base.html' %}
+{% block body %}
+<div style="padding:28px;font-family:'Nunito',sans-serif;background:#070b12;min-height:100vh;color:#dde6f0">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
+
+<h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;margin-bottom:6px;background:linear-gradient(135deg,#fff,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🛠️ Admin Dashboard</h1>
+<p style="color:#556070;font-size:.88rem;margin-bottom:28px">Full control over LearnTrack data</p>
+
+<!-- Stat Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px">
+  {% set cards = [('👤','Users',stats.users,'#00d4ff'),('📚','Subjects',stats.subjects,'#8b5cf6'),('📝','Topics',stats.topics,'#f59e0b'),('🗂️','Subtopics',stats.subtopics,'#f97316'),('🎯','Mocks Done',stats.mocks,'#10b981')] %}
+  {% for icon,label,val,color in cards %}
+  <div style="background:#0d1421;border:1px solid #1a2640;border-radius:12px;padding:16px;border-top:2px solid {{color}};position:relative">
+    <div style="position:absolute;right:12px;top:12px;font-size:1.3rem;opacity:.35">{{icon}}</div>
+    <div style="font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;line-height:1">{{val}}</div>
+    <div style="font-size:.72rem;color:#556070;font-family:'JetBrains Mono',monospace;margin-top:3px">{{label}}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+  <!-- Quick links -->
+  <div style="background:#0d1421;border:1px solid #1a2640;border-radius:12px;padding:20px">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">⚡ Quick Access</div>
+    {% for href,icon,label,color in [('/admin/user/','👤','Manage Users','#00d4ff'),('/admin/subject/','📚','Manage Subjects','#8b5cf6'),('/admin/topic/','📝','Manage Topics','#f59e0b'),('/admin/subtopic/','🗂️','Manage Subtopics','#f97316'),('/admin/mocktest/','🎯','Mock Tests','#10b981')] %}
+    <a href="{{href}}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(255,255,255,.02);border:1px solid #1a2640;border-radius:8px;color:#dde6f0;text-decoration:none;font-size:.86rem;margin-bottom:6px;transition:all .2s" onmouseover="this.style.borderColor='{{color}}';this.style.color='{{color}}'" onmouseout="this.style.borderColor='#1a2640';this.style.color='#dde6f0'">{{icon}} {{label}}</a>
+    {% endfor %}
+    <a href="/" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);border-radius:8px;color:#00d4ff;text-decoration:none;font-size:.86rem;margin-top:8px">← Back to App</a>
+  </div>
+
+  <!-- Recent users -->
+  <div style="background:#0d1421;border:1px solid #1a2640;border-radius:12px;padding:20px">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">👤 Recent Users</div>
+    {% for u in recent_users %}
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(26,38,64,.5);font-size:.84rem">
+      <div style="width:28px;height:28px;background:linear-gradient(135deg,#8b5cf6,#00d4ff);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;flex-shrink:0">{{u.username[0].upper()}}</div>
+      <span style="flex:1;font-weight:600">{{u.username}}</span>
+      <span style="font-size:.7rem;padding:2px 8px;border-radius:10px;{% if u.is_admin %}background:rgba(0,212,255,.1);color:#00d4ff;border:1px solid rgba(0,212,255,.2){% else %}background:rgba(85,96,112,.2);color:#556070;border:1px solid #1a2640{% endif %}">{% if u.is_admin %}admin{% else %}learner{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Recent topics -->
+<div style="background:#0d1421;border:1px solid #1a2640;border-radius:12px;padding:20px">
+  <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">📝 Recently Added Topics</div>
+  <table style="width:100%;border-collapse:collapse">
+    <thead><tr>
+      <th style="font-size:.7rem;font-family:'JetBrains Mono',monospace;color:#556070;text-transform:uppercase;letter-spacing:1px;padding:8px 12px;text-align:left;border-bottom:1px solid #1a2640">Topic</th>
+      <th style="font-size:.7rem;font-family:'JetBrains Mono',monospace;color:#556070;text-transform:uppercase;letter-spacing:1px;padding:8px 12px;text-align:left;border-bottom:1px solid #1a2640">Subject</th>
+      <th style="font-size:.7rem;font-family:'JetBrains Mono',monospace;color:#556070;text-transform:uppercase;letter-spacing:1px;padding:8px 12px;text-align:left;border-bottom:1px solid #1a2640">Added</th>
+    </tr></thead>
+    <tbody>
+      {% for t in recent_topics %}
+      <tr>
+        <td style="padding:10px 12px;font-weight:600;font-size:.86rem;border-bottom:1px solid rgba(26,38,64,.4)">{{t.name}}</td>
+        <td style="padding:10px 12px;color:#556070;font-size:.84rem;border-bottom:1px solid rgba(26,38,64,.4)">{{t.subject.name}}</td>
+        <td style="padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#556070;border-bottom:1px solid rgba(26,38,64,.4)">{{t.created_at.strftime('%d %b %Y')}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+{% endblock %}

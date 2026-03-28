@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.name }} — LearnTrack{% endblock %}
+{% block page_title %}{{ topic.name }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('subjects.index') }}">Subjects</a> /
+  <a href="{{ url_for('subjects.detail', id=topic.subject_id) }}">{{ topic.subject.name }}</a> /
+  {{ topic.name }}
+{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('subtopics.add', topic_id=topic.id) }}" class="btn btn-secondary btn-sm">+ Add Subtopic</a>
+  <a href="{{ url_for('topics.edit', id=topic.id) }}" class="btn btn-secondary btn-sm">✏️ Edit</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+
+  <!-- LEFT: Topic info + subtopics -->
+  <div>
+
+    <!-- Progress card -->
+    <div class="card" style="margin-bottom:16px;border-left:3px solid {{ topic.subject.color }}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div style="font-size:.78rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:4px">OVERALL PROGRESS</div>
+          <div style="font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;line-height:1;color:{{ topic.subject.color }}">{{ topic.progress_percent }}%</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+          {% if topic.is_fully_covered %}
+            <span class="badge badge-covered">🏆 FULLY COVERED</span>
+          {% elif topic.mock_done %}
+            <span class="badge badge-covered">🎯 Mock Done</span>
+          {% elif topic.practiced %}
+            <span class="badge badge-practiced">🏋️ Practiced</span>
+          {% elif topic.go_through %}
+            <span class="badge badge-gothrough">👁️ Go Through</span>
+          {% else %}
+            <span class="badge badge-pending">⏳ Pending</span>
+          {% endif %}
+          {% if topic.confidence_level %}
+            <span class="conf conf-{{ topic.confidence_level[1] }}">
+              {% if topic.confidence_level[1]=='mastered' %}🌟
+              {% elif topic.confidence_level[1]=='strong' %}💪
+              {% elif topic.confidence_level[1]=='medium' %}📈
+              {% elif topic.confidence_level[1]=='low' %}📉
+              {% else %}⚠️{% endif %}
+              {{ topic.confidence_level[0] }}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Stage track -->
+      <div class="stage-track">
+        <div class="stage" style="flex:25">
+          <div class="stage-bar {% if topic.go_through %}filled-go{% endif %}"></div>
+          <div class="stage-label">Go Through</div>
+          <div class="stage-pct" style="color:var(--accent)">25%</div>
+        </div>
+        <div class="stage" style="flex:40">
+          <div class="stage-bar {% if topic.practiced %}filled-prac{% endif %}"></div>
+          <div class="stage-label">Practiced</div>
+          <div class="stage-pct" style="color:var(--yellow)">40%</div>
+        </div>
+        <div class="stage" style="flex:35">
+          <div class="stage-bar {% if topic.mock_done %}filled-mock{% endif %}"></div>
+          <div class="stage-label">Mock Done</div>
+          <div class="stage-pct" style="color:var(--green)">35%</div>
+        </div>
+      </div>
+      <div class="progress-bar" style="height:8px;margin-top:4px">
+        <div class="progress-fill" style="width:{{ topic.progress_percent }}%"></div>
+      </div>
+
+      {% if not topic.has_subtopics %}
+      <!-- Stage action buttons (only when no subtopics) -->
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <form method="POST" action="{{ url_for('topics.toggle_go_through', id=topic.id) }}">
+          <button type="submit" class="btn {% if topic.go_through %}btn-success{% else %}btn-secondary{% endif %} btn-sm">
+            {% if topic.go_through %}✅ Go Through Done{% else %}👁️ Mark Go Through{% endif %}
+          </button>
+        </form>
+
+        <form method="POST" action="{{ url_for('topics.toggle_practice', id=topic.id) }}">
+          <button type="submit" class="btn {% if topic.practiced %}btn-warning{% else %}btn-secondary{% endif %} btn-sm"
+                  {% if not topic.go_through %}disabled title="Complete Go Through first"{% endif %}>
+            {% if topic.practiced %}🏋️ Practiced Done{% else %}🏋️ Mark Practiced{% endif %}
+          </button>
+        </form>
+
+        {% if topic.average_mock_score %}
+        <span style="font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:4px">
+          Avg Mock: <b style="color:var(--accent)">{{ topic.average_mock_score }}%</b>
+        </span>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Notes -->
+    {% if topic.notes %}
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:10px;font-size:.9rem">📄 Notes</div>
+      <div style="font-size:.88rem;line-height:1.8;color:var(--text);white-space:pre-wrap">{{ topic.notes }}</div>
+    </div>
+    {% endif %}
+
+    <!-- PDFs -->
+    {% if topic.pdfs %}
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:10px;font-size:.9rem">📎 Resources</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        {% for pdf in topic.pdfs %}
+        <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
+          <span>📕</span>
+          <span style="font-size:.82rem">{{ pdf.label }}</span>
+          <a href="{{ url_for('topics.view_pdf', pdf_id=pdf.id) }}" target="_blank" class="btn btn-xs btn-secondary">View</a>
+          <form method="POST" action="{{ url_for('topics.delete_pdf', pdf_id=pdf.id) }}" style="display:inline" onsubmit="return confirm('Delete?')">
+            <button type="submit" class="btn btn-xs btn-danger btn-icon">🗑️</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Subtopics -->
+    {% if topic.has_subtopics %}
+    <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+      <span>📂 Subtopics <span style="font-size:.8rem;color:var(--muted);font-weight:400">({{ topic.subtopics|length }})</span></span>
+      <a href="{{ url_for('subtopics.add', topic_id=topic.id) }}" class="btn btn-secondary btn-sm">+ Add</a>
+    </div>
+
+    {% for sub in topic.subtopics %}
+    <div class="card" style="margin-bottom:10px;border-left:3px solid {% if sub.is_fully_covered %}var(--green){% elif sub.practiced %}var(--yellow){% elif sub.go_through %}var(--accent){% else %}var(--border){% endif %}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:.95rem;margin-bottom:2px">{{ sub.name }}</div>
+          {% if sub.notes %}
+          <div style="font-size:.78rem;color:var(--muted)">{{ sub.notes[:80] }}{% if sub.notes|length>80 %}…{% endif %}</div>
+          {% endif %}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:10px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700;color:{% if sub.is_fully_covered %}var(--green){% else %}var(--accent){% endif %}">{{ sub.progress_percent }}%</span>
+          {% if sub.confidence_level %}
+          <span class="conf conf-{{ sub.confidence_level[1] }}">{{ sub.confidence_level[0] }}</span>
+          {% endif %}
+          <a href="{{ url_for('subtopics.edit', id=sub.id) }}" class="btn btn-xs btn-secondary btn-icon">✏️</a>
+          <form method="POST" action="{{ url_for('subtopics.delete', id=sub.id) }}" style="display:inline" onsubmit="return confirm('Delete?')">
+            <button type="submit" class="btn btn-xs btn-danger btn-icon">🗑️</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Subtopic stage track -->
+      <div class="stage-track" style="margin:8px 0">
+        <div class="stage" style="flex:25"><div class="stage-bar {% if sub.go_through %}filled-go{% endif %}"></div></div>
+        <div class="stage" style="flex:40"><div class="stage-bar {% if sub.practiced %}filled-prac{% endif %}"></div></div>
+        <div class="stage" style="flex:35"><div class="stage-bar {% if sub.mock_done %}filled-mock{% endif %}"></div></div>
+      </div>
+
+      <!-- Subtopic action buttons -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <form method="POST" action="{{ url_for('subtopics.toggle_go_through', id=sub.id) }}">
+          <button type="submit" class="btn btn-xs {% if sub.go_through %}btn-success{% else %}btn-secondary{% endif %}">
+            {% if sub.go_through %}✅{% else %}👁️{% endif %} Go Through
+          </button>
+        </form>
+        <form method="POST" action="{{ url_for('subtopics.toggle_practice', id=sub.id) }}">
+          <button type="submit" class="btn btn-xs {% if sub.practiced %}btn-warning{% else %}btn-secondary{% endif %}"
+                  {% if not sub.go_through %}disabled{% endif %}>
+            {% if sub.practiced %}🏋️{% else %}🏋️{% endif %} Practice
+          </button>
+        </form>
+
+        <!-- Subtopic mock tests inline -->
+        {% set sub_mocks = sub.mock_tests | sort(attribute='test_number') %}
+        {% if sub.practiced or sub.mock_done %}
+        <button type="button" class="btn btn-xs btn-purple" onclick="toggleMocks('sub-{{ sub.id }}')">
+          🎯 Mock Tests ({{ sub.mock_tests | selectattr('attempted') | list | length }}/5)
+        </button>
+        {% endif %}
+        {% if sub.average_mock_score %}
+        <span style="font-size:.75rem;color:var(--muted);display:flex;align-items:center">Avg: <b style="color:var(--accent);margin-left:3px">{{ sub.average_mock_score }}%</b></span>
+        {% endif %}
+      </div>
+
+      <!-- Subtopic mock test panel -->
+      {% if sub.practiced or sub.mock_done %}
+      <div id="sub-{{ sub.id }}" style="display:none;margin-top:12px">
+        <div class="mock-grid">
+          {% for mt in sub.mock_tests | sort(attribute='test_number') %}
+          <div class="mock-cell {% if mt.attempted %}{% if mt.score >= 80 %}pass{% else %}fail{% endif %}{% endif %}">
+            <div class="mock-num">Test {{ mt.test_number }}</div>
+            {% if mt.attempted %}
+              <div class="mock-score {% if mt.score >= 80 %}pass-score{% else %}fail-score{% endif %}">{{ mt.score | int }}</div>
+              <div style="font-size:.65rem;color:var(--muted);margin-top:2px">pts</div>
+            {% else %}
+              <form method="POST" action="{{ url_for('mocks.submit_subtopic_mock', subtopic_id=sub.id) }}" style="margin-top:4px">
+                <input type="hidden" name="test_id" value="{{ mt.id }}">
+                <input type="number" name="score" min="0" max="100" placeholder="0-100"
+                       style="width:100%;padding:4px;font-size:.75rem;text-align:center;margin-bottom:4px">
+                <button type="submit" class="btn btn-xs btn-primary" style="width:100%">Save</button>
+              </form>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% if sub.mock_done %}
+        <form method="POST" action="{{ url_for('mocks.reset_subtopic_mocks', subtopic_id=sub.id) }}" style="margin-top:8px">
+          <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Reset all mock tests?')">🔄 Reset Mocks</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    {% else %}
+
+    <!-- Direct topic mock tests (no subtopics) -->
+    {% if topic.practiced or topic.mock_done %}
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem">🎯 Mock Tests</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          {% if topic.average_mock_score %}
+          <span style="font-size:.85rem;color:var(--muted)">Avg: <b style="color:var(--accent)">{{ topic.average_mock_score }}%</b></span>
+          {% endif %}
+          <form method="POST" action="{{ url_for('mocks.reset_topic_mocks', topic_id=topic.id) }}">
+            <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Reset all mock tests?')">🔄 Reset</button>
+          </form>
+        </div>
+      </div>
+      <div class="mock-grid">
+        {% for mt in mock_tests %}
+        <div class="mock-cell {% if mt.attempted %}{% if mt.score >= 80 %}pass{% else %}fail{% endif %}{% endif %}">
+          <div class="mock-num">Test {{ mt.test_number }}</div>
+          {% if mt.attempted %}
+            <div class="mock-score {% if mt.score >= 80 %}pass-score{% else %}fail-score{% endif %}">{{ mt.score | int }}</div>
+            <div style="font-size:.65rem;color:var(--muted);margin-top:2px">/ 100</div>
+          {% else %}
+            <form method="POST" action="{{ url_for('mocks.submit_topic_mock', topic_id=topic.id) }}" style="margin-top:6px">
+              <input type="hidden" name="test_id" value="{{ mt.id }}">
+              <input type="number" name="score" min="0" max="100" placeholder="Score"
+                     style="width:100%;padding:5px;font-size:.78rem;text-align:center;margin-bottom:5px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text)">
+              <button type="submit" class="btn btn-xs btn-primary" style="width:100%">Save</button>
+            </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% if not topic.can_attempt_mock %}
+      <div style="margin-top:10px;font-size:.8rem;color:var(--muted)">⚠️ Complete Practice first to unlock mock tests.</div>
+      {% endif %}
+    </div>
+    {% elif topic.go_through %}
+    <div class="card" style="text-align:center;padding:24px;color:var(--muted)">
+      <div style="font-size:1.5rem;margin-bottom:8px">🏋️</div>
+      <div style="font-size:.9rem">Mark <b>Practiced</b> to unlock mock tests.</div>
+    </div>
+    {% else %}
+    <div class="card" style="text-align:center;padding:24px;color:var(--muted)">
+      <div style="font-size:1.5rem;margin-bottom:8px">👁️</div>
+      <div style="font-size:.9rem">Start by marking <b>Go Through</b>, then Practice, then Mock.</div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+  </div>
+
+  <!-- RIGHT sidebar info -->
+  <div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:12px;font-size:.9rem">📋 Topic Info</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:.83rem">
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">Subject</span>
+          <a href="{{ url_for('subjects.detail', id=topic.subject_id) }}" style="color:var(--accent);text-decoration:none">{{ topic.subject.name }}</a>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">Subtopics</span>
+          <span>{{ topic.subtopics|length }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">Added</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem">{{ topic.created_at.strftime('%d %b %Y') }}</span>
+        </div>
+        {% if topic.go_through_at %}
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">Go Through</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem">{{ topic.go_through_at.strftime('%d %b') }}</span>
+        </div>
+        {% endif %}
+        {% if topic.practiced_at %}
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">Practiced</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem">{{ topic.practiced_at.strftime('%d %b') }}</span>
+        </div>
+        {% endif %}
+        {% if topic.mock_done_at %}
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--muted)">Mock Passed</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem">{{ topic.mock_done_at.strftime('%d %b') }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Progress formula card -->
+    <div class="card" style="margin-bottom:14px;background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.15)">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:10px;font-size:.85rem;color:var(--accent)">📐 Progress Formula</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.9;color:var(--muted)">
+        <div>Go Through  → <span style="color:var(--accent)">25%</span></div>
+        <div>Practiced   → <span style="color:var(--yellow)">40%</span></div>
+        <div>Mock Done   → <span style="color:var(--green)">35%</span></div>
+        <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
+          Total = <span style="color:var(--text)">{{ topic.progress_percent }}%</span>
+        </div>
+        <div style="margin-top:4px">Mock Pass = <span style="color:var(--green)">avg ≥ 80%</span></div>
+      </div>
+    </div>
+
+    <!-- Confidence guide -->
+    <div class="card">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:10px;font-size:.85rem">🧠 Confidence Guide</div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:.75rem;font-family:'JetBrains Mono',monospace">
+        <span class="conf conf-weak"    style="justify-content:space-between"><span>⚠️ Weak</span>    <span>0–40%</span></span>
+        <span class="conf conf-low"     style="justify-content:space-between"><span>📉 Low</span>     <span>40–60%</span></span>
+        <span class="conf conf-medium"  style="justify-content:space-between"><span>📈 Medium</span>  <span>60–75%</span></span>
+        <span class="conf conf-strong"  style="justify-content:space-between"><span>💪 Strong</span>  <span>75–90%</span></span>
+        <span class="conf conf-mastered"style="justify-content:space-between"><span>🌟 Mastered</span><span>90–100%</span></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggleMocks(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

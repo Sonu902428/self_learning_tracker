@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{% if subject %}Edit Subject{% else %}New Subject{% endif %}{% endblock %}
+{% block page_title %}{% if subject %}Edit Subject{% else %}Add Subject{% endif %}{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('subjects.index') }}">Subjects</a> / {% if subject %}Edit{% else %}New{% endif %}{% endblock %}
+{% block content %}
+<div style="max-width:500px">
+  <div class="card">
+    <form method="POST">
+      <div class="form-group"><label>Subject Name *</label><input type="text" name="name" value="{{ subject.name if subject else '' }}" required autofocus placeholder="e.g. Python, Data Structures…"></div>
+      <div class="form-group"><label>Description</label><textarea name="description" placeholder="What will you learn in this subject?">{{ subject.description if subject else '' }}</textarea></div>
+      <div class="form-group"><label>Color</label><div style="display:flex;align-items:center;gap:10px"><input type="color" name="color" value="{{ subject.color if subject else '#00d4ff' }}"><span style="font-size:.82rem;color:var(--muted)">Color tag for this subject</span></div></div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button type="submit" class="btn btn-primary">{% if subject %}Save Changes{% else %}Create Subject{% endif %}</button>
+        <a href="{{ url_for('subjects.index') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — LearnTrack{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block breadcrumb %}Your learning overview{% endblock %}
+{% block topbar_actions %}<a href="{{ url_for('subjects.add') }}" class="btn btn-primary btn-sm">+ Add Subject</a>{% endblock %}
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>{% endblock %}
+
+{% block content %}
+<!-- Stat cards -->
+<div class="stats-grid">
+  <div class="stat-card" style="--stat-color:var(--accent)">
+    <a href="{{ url_for('subjects.index') }}" style="text-decoration:none" ><div class="stat-icon">📚</div>
+    <div class="stat-value" style="color:white">{{ subjects|length }}</div>
+    <div class="stat-label">Subjects</div></a>
+  </div>
+  <div class="stat-card" style="--stat-color:var(--purple)">
+    <a href="{{ url_for('topics.topic_list') }}" style="text-decoration:none">
+    <div class="stat-icon">📝</div>
+    <div class="stat-value" style="color:white">{{ total_topics }}</div>
+    <div class="stat-label">Topics</div></a>
+  </div>
+  <div class="stat-card" style="--stat-color:var(--muted)">
+    <div class="stat-icon">🗂️</div>
+    <div class="stat-value">{{ total_subtopics }}</div>
+    <div class="stat-label">Subtopics</div>
+  </div>
+  <div class="stat-card" style="--stat-color:var(--green)">
+    <div class="stat-icon">🏆</div>
+    <div class="stat-value">{{ completed_topics }}</div>
+    <div class="stat-label">Completed</div>
+  </div>
+  <div class="stat-card" style="--stat-color:var(--yellow)">
+    <div class="stat-icon">🎯</div>
+    <div class="stat-value">{{ total_mocks }}</div>
+    <div class="stat-label">Mocks Done</div>
+  </div>
+  <div class="stat-card" style="--stat-color:var(--orange)">
+    <div class="stat-icon">📊</div>
+    <div class="stat-value">{{ avg_mock_score or '—' }}{% if avg_mock_score %}<span style="font-size:1rem">%</span>{% endif %}</div>
+    <div class="stat-label">Avg Mock Score</div>
+  </div>
+</div>
+
+<!-- Overall progress -->
+<div class="card" style="margin-bottom:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem">Overall Progress</span>
+    <span style="font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:1.2rem;font-weight:700">{{ overall_pct }}%</span>
+  </div>
+  <!-- Stage track -->
+  <div class="stage-track">
+    <div class="stage" style="flex:25">
+      <div class="stage-bar {% if go_count > 0 %}filled-go{% endif %}"></div>
+      <div class="stage-label">Go Through</div>
+      <div class="stage-pct" style="color:var(--accent)">25%</div>
+    </div>
+    <div class="stage" style="flex:40">
+      <div class="stage-bar {% if prac_count > 0 %}filled-prac{% endif %}"></div>
+      <div class="stage-label">Practiced</div>
+      <div class="stage-pct" style="color:var(--yellow)">40%</div>
+    </div>
+    <div class="stage" style="flex:35">
+      <div class="stage-bar {% if mock_count > 0 %}filled-mock{% endif %}"></div>
+      <div class="stage-label">Mock Done</div>
+      <div class="stage-pct" style="color:var(--green)">35%</div>
+    </div>
+  </div>
+  <div class="progress-bar" style="height:10px;margin-top:4px">
+    <div class="progress-fill" style="width:{{ overall_pct }}%"></div>
+  </div>
+  <div style="display:flex;gap:24px;margin-top:8px;font-size:.78rem;color:var(--muted)">
+    <span>🔵 Go Through: <b style="color:var(--text)">{{ go_count }}</b></span>
+    <span>🟡 Practiced: <b style="color:var(--text)">{{ prac_count }}</b></span>
+    <span>🟢 Mock Done: <b style="color:var(--text)">{{ mock_count }}</b></span>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start">
+
+  <!-- Subject progress list -->
+  <div>
+    <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:12px">Subjects Progress</div>
+    {% if subjects %}
+      {% for s in subjects %}
+      <div class="card" style="margin-bottom:10px;padding:14px 18px;border-left:3px solid {{ s.color }}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <a href="{{ url_for('subjects.detail', id=s.id) }}"
+             style="font-weight:700;color:var(--text);text-decoration:none;font-size:.95rem">{{ s.name }}</a>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.9rem;color:{{ s.color }};font-weight:700">{{ s.progress_percent }}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:{{ s.progress_percent }}%;background:linear-gradient(90deg,{{ s.color }}88,{{ s.color }})"></div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:6px;font-size:.74rem;color:var(--muted)">
+          <span>📝 {{ s.total_topics }} topics</span>
+          <span style="color:var(--green)">🏆 {{ s.completed_topics }} done</span>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+        <div style="font-size:2.5rem;margin-bottom:10px">📚</div>
+        <div style="margin-bottom:14px">No subjects yet!</div>
+        <a href="{{ url_for('subjects.add') }}" class="btn btn-primary">+ Add Subject</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Right column -->
+  <div>
+    <!-- Doughnut chart -->
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:10px;font-size:.9rem">Stage Breakdown</div>
+      <canvas id="stageChart" height="180"></canvas>
+    </div>
+
+    <!-- Subject bar chart -->
+    {% if subjects %}
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:10px;font-size:.9rem">Per Subject</div>
+      <canvas id="subjectChart" height="200"></canvas>
+    </div>
+    {% endif %}
+
+    <!-- Recent activity -->
+    <div class="card">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:12px;font-size:.9rem">📋 Recent Activity</div>
+      {% if recent_topics %}
+        {% for t in recent_topics %}
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+          <span style="font-size:.9rem;flex-shrink:0">👁️</span>
+          <div>
+            <a href="{{ url_for('topics.detail', id=t.id) }}" style="font-size:.85rem;font-weight:600;color:var(--text);text-decoration:none">{{ t.name }}</a>
+            <div style="font-size:.72rem;color:var(--muted)">{{ t.subject.name }} · {{ t.go_through_at.strftime('%d %b') }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="color:var(--muted);font-size:.83rem;text-align:center;padding:12px 0">No activity yet.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+// Stage doughnut
+new Chart(document.getElementById('stageChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Go Through (25%)', 'Practiced (40%)', 'Mock Done (35%)'],
+    datasets: [{
+      data: [{{ go_count }}, {{ prac_count }}, {{ mock_count }}],
+      backgroundColor: ['rgba(0,212,255,.75)','rgba(245,158,11,.75)','rgba(16,185,129,.75)'],
+      borderColor: ['#00d4ff','#f59e0b','#10b981'],
+      borderWidth: 2
+    }]
+  },
+  options: {
+    cutout:'62%',
+    plugins:{
+      legend:{position:'bottom',labels:{color:'#dde6f0',font:{family:'JetBrains Mono',size:10},padding:10}}
+    }
+  }
+});
+
+{% if subjects %}
+// Subject bar chart
+new Chart(document.getElementById('subjectChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ chart_labels | tojson }},
+    datasets: [{
+      label: 'Progress %',
+      data: {{ chart_data | tojson }},
+      backgroundColor: {{ chart_colors | tojson }}.map(c => c + 'aa'),
+      borderColor: {{ chart_colors | tojson }},
+      borderWidth: 2,
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    scales:{
+      y:{beginAtZero:true,max:100,grid:{color:'rgba(255,255,255,.04)'},
+         ticks:{color:'#556070',font:{family:'JetBrains Mono',size:10}}},
+      x:{grid:{display:false},ticks:{color:'#556070',font:{family:'JetBrains Mono',size:10}}}
+    },
+    plugins:{legend:{display:false}}
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

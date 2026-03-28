@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ subject.name }}{% endblock %}
+{% block page_title %}{{ subject.name }}{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('subjects.index') }}">Subjects</a> / {{ subject.name }}{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('topics.add', subject_id=subject.id) }}" class="btn btn-primary btn-sm">+ Add Topic</a>
+  <a href="{{ url_for('subjects.edit', id=subject.id) }}" class="btn btn-secondary btn-sm">✏️ Edit</a>
+{% endblock %}
+
+{% block content %}
+<!-- Subject header -->
+<div class="card" style="margin-bottom:18px;border-left:4px solid {{ subject.color }}">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <div>
+      {% if subject.description %}<div style="color:var(--muted);font-size:.86rem;margin-bottom:8px">{{ subject.description }}</div>{% endif %}
+      <div style="display:flex;gap:18px;font-size:.8rem;flex-wrap:wrap">
+        <span>📝 <b>{{ subject.total_topics }}</b> topics</span>
+        <span style="color:var(--green)">🏆 <b>{{ subject.completed_topics }}</b> completed</span>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;color:{{ subject.color }};line-height:1">{{ subject.progress_percent }}%</div>
+      <div class="progress-bar" style="width:120px;margin-top:5px">
+        <div class="progress-fill" style="width:{{ subject.progress_percent }}%;background:{{ subject.color }}"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if subject.topics %}
+<div class="card" style="padding:0;overflow:hidden">
+  <table>
+    <thead>
+      <tr>
+        <th>Topic</th>
+        <th>Progress</th>
+        <th>Go Through</th>
+        <th>Practice</th>
+        <th>Mock</th>
+        <th>Confidence</th>
+        <th>Subtopics</th>
+        <th style="text-align:right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for topic in subject.topics %}
+      <tr>
+        <td>
+          <a href="{{ url_for('topics.detail', id=topic.id) }}" style="font-weight:700;color:var(--text);text-decoration:none;font-size:.9rem">{{ topic.name }}</a>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="progress-bar" style="width:80px">
+              <div class="progress-fill" style="width:{{ topic.progress_percent }}%"></div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);white-space:nowrap">{{ topic.progress_percent }}%</span>
+          </div>
+        </td>
+        <td>
+          {% if topic.has_subtopics %}
+            <span style="font-size:.75rem;color:var(--muted)">via subtopics</span>
+          {% else %}
+          <form method="POST" action="{{ url_for('topics.toggle_go_through', id=topic.id) }}" style="display:inline">
+            <button type="submit" class="btn btn-xs {% if topic.go_through %}btn-success{% else %}btn-secondary{% endif %}">
+              {% if topic.go_through %}✅{% else %}⬜{% endif %}
+            </button>
+          </form>
+          {% endif %}
+        </td>
+        <td>
+          {% if not topic.has_subtopics %}
+          <form method="POST" action="{{ url_for('topics.toggle_practice', id=topic.id) }}" style="display:inline">
+            <button type="submit" class="btn btn-xs {% if topic.practiced %}btn-warning{% else %}btn-secondary{% endif %}"
+                    {% if not topic.go_through %}disabled{% endif %}>
+              {% if topic.practiced %}🏋️{% else %}⬜{% endif %}
+            </button>
+          </form>
+          {% else %}
+            <span style="font-size:.75rem;color:var(--muted)">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if topic.mock_done %}
+            <span class="badge badge-covered">🎯 Done</span>
+          {% elif topic.practiced %}
+            <a href="{{ url_for('topics.detail', id=topic.id) }}" class="badge badge-practiced">🎯 Attempt</a>
+          {% else %}
+            <span class="badge badge-pending">🔒</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if topic.confidence_level %}
+            <span class="conf conf-{{ topic.confidence_level[1] }}">{{ topic.confidence_level[0] }}</span>
+          {% else %}
+            <span style="color:var(--muted);font-size:.75rem">—</span>
+          {% endif %}
+        </td>
+        <td>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted)">{{ topic.subtopics|length }}</span>
+        </td>
+        <td>
+          <div style="display:flex;gap:5px;justify-content:flex-end">
+            <a href="{{ url_for('topics.detail', id=topic.id) }}" class="btn btn-secondary btn-xs">👁️</a>
+            <a href="{{ url_for('topics.edit', id=topic.id) }}" class="btn btn-secondary btn-xs btn-icon">✏️</a>
+            <form method="POST" action="{{ url_for('topics.delete', id=topic.id) }}" onsubmit="return confirm('Delete topic?')">
+              <button type="submit" class="btn btn-danger btn-xs btn-icon">🗑️</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:50px;color:var(--muted)">
+  <div style="font-size:2rem;margin-bottom:10px">📝</div>
+  <div style="margin-bottom:14px">No topics yet.</div>
+  <a href="{{ url_for('topics.add', subject_id=subject.id) }}" class="btn btn-primary">+ Add Topic</a>
+</div>
+{% endif %}
+{% endblock %}

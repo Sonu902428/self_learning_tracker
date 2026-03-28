@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}{% if topic %}Edit Topic{% else %}Add Topic{% endif %}{% endblock %}
+{% block page_title %}{% if topic %}Edit Topic{% else %}Add Topic to "{{ subject.name }}"{% endif %}{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('subjects.index') }}">Subjects</a> / <a href="{{ url_for('subjects.detail', id=subject.id) }}">{{ subject.name }}</a> / {% if topic %}Edit{% else %}New Topic{% endif %}{% endblock %}
+{% block content %}
+<div style="max-width:640px">
+  <div class="card">
+    <form method="POST" enctype="multipart/form-data" id="topicForm">
+      <div class="form-group"><label>Topic Name *</label><input type="text" name="name" value="{{ topic.name if topic else '' }}" required autofocus placeholder="e.g. Recursion, Django ORM…"></div>
+
+      <div class="form-group">
+        <label>Notes & Resources</label>
+        <div class="tab-bar">
+          <button type="button" class="tab-btn active" onclick="switchTab(this,'text')">📄 Text Notes</button>
+          <button type="button" class="tab-btn" onclick="switchTab(this,'pdf')">📎 PDFs</button>
+        </div>
+        <div class="tab-panel active" id="panel-text">
+          <textarea name="notes" placeholder="Write your notes, key concepts, formulas…">{{ topic.notes if topic else '' }}</textarea>
+        </div>
+        <div class="tab-panel" id="panel-pdf">
+          {% if topic and topic.pdfs %}
+          <div style="margin-bottom:14px">
+            {% for pdf in topic.pdfs %}
+            <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:6px">
+              <span>📕</span><span style="flex:1;font-size:.83rem">{{ pdf.label }}</span>
+              <a href="{{ url_for('topics.view_pdf', pdf_id=pdf.id) }}" target="_blank" class="btn btn-xs btn-secondary">View</a>
+              <button type="button"
+                      onclick="deletePDF({{ pdf.id }})"
+                      class="btn btn-xs btn-danger btn-icon">
+                🗑️
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;position:relative;cursor:pointer" id="dropZone" onclick="document.getElementById('pdfInput').click()">
+            <input type="file" name="pdfs[]" id="pdfInput" multiple accept=".pdf" style="display:none">
+            <div style="font-size:1.8rem;margin-bottom:6px">📎</div>
+            <div style="font-weight:600;margin-bottom:3px">Click to upload PDFs</div>
+            <div style="font-size:.76rem;color:var(--muted)">Multiple files · PDF only · Max 16MB each</div>
+          </div>
+          <div id="fileList" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn btn-primary">{% if topic %}Save Changes{% else %}Add Topic{% endif %}</button>
+        <a href="{{ url_for('subjects.detail', id=subject.id) }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function switchTab(btn, tab) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function deletePDF(pdfId){
+
+  if(!confirm("Delete this PDF?")) return;
+
+  fetch(`/topics/pdf/${pdfId}/delete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  }).then(()=>{
+      location.reload();
+  });
+
+}
+// Track selected files - this is the key fix for edit mode
+let selectedFiles = [];
+
+const pdfInput = document.getElementById("pdfInput");
+const dropZone = document.getElementById("dropZone");
+const fileList = document.getElementById("fileList");
+
+// Handle file selection
+pdfInput.addEventListener("change", function(e) {
+  const newFiles = Array.from(e.target.files || []);
+  
+  newFiles.forEach(newFile => {
+    // Avoid duplicates by checking name and size
+    const isDuplicate = selectedFiles.some(f => 
+      f.name === newFile.name && f.size === newFile.size
+    );
+    if (!isDuplicate) {
+      selectedFiles.push(newFile);
+    }
+  });
+  
+  renderFiles();
+  // Reset input so same file can be selected again if needed
+  pdfInput.value = '';
+});
+
+// Handle drag and drop
+dropZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.style.backgroundColor = "rgba(0,0,0,0.05)";
+  dropZone.style.borderColor = "var(--primary)";
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.style.backgroundColor = "transparent";
+  dropZone.style.borderColor = "var(--border)";
+});
+
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropZone.style.backgroundColor = "transparent";
+  dropZone.style.borderColor = "var(--border)";
+  
+  const droppedFiles = Array.from(e.dataTransfer.files || []);
+  
+  droppedFiles.forEach(droppedFile => {
+    if (droppedFile.type === "application/pdf") {
+      const isDuplicate = selectedFiles.some(f => 
+        f.name === droppedFile.name && f.size === droppedFile.size
+      );
+      if (!isDuplicate) {
+        selectedFiles.push(droppedFile);
+      }
+    }
+  });
+  
+  renderFiles();
+});
+
+function renderFiles() {
+  fileList.innerHTML = "";
+  
+  selectedFiles.forEach((file, index) => {
+    const div = document.createElement("div");
+    div.style.display = "flex";
+    div.style.alignItems = "center";
+    div.style.gap = "8px";
+    div.style.background = "var(--bg)";
+    div.style.border = "1px solid var(--border)";
+    div.style.borderRadius = "8px";
+    div.style.padding = "8px 12px";
+    div.style.marginBottom = "6px";
+
+    const fileName = file.name.replace('.pdf', '');
+
+    div.innerHTML = `
+      <span>📕</span>
+      <span style="flex:1;font-size:.82rem">${file.name}</span>
+      <input type="text"
+             name="pdf_labels[]"
+             value="${fileName}"
+             placeholder="Label"
+             style="width:130px;padding:4px 8px;font-size:.78rem;border:1px solid var(--border);border-radius:4px;">
+      <button type="button"
+              onclick="removeFile(${index})"
+              style="background:none;border:none;color:red;cursor:pointer;padding:4px;font-size:1.1rem;line-height:1;">✕</button>
+    `;
+
+    fileList.appendChild(div);
+  });
+
+
+}
+
+
+
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  renderFiles();
+}
+
+// Ensure files are updated right before form submission - CRITICAL FIX
+document.getElementById("topicForm").addEventListener("submit", function(e) {
+
+  // Remove any previous temp inputs
+  document.querySelectorAll(".temp-file-input").forEach(el => el.remove());
+
+  selectedFiles.forEach(file => {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.name = "pdfs[]";
+    input.files = dt.files;
+    input.classList.add("temp-file-input");
+    input.style.display = "none";
+
+    this.appendChild(input);
+  });
+
+});
+</script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends 'admin/base.html' %}
+
+{% block head_css %}
+  {{ super() }}
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Nunito:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070b12; --surface: #0d1421; --border: #1a2640;
+      --accent: #00d4ff; --green: #10b981; --yellow: #f59e0b;
+      --purple: #8b5cf6; --red: #ef4444; --text: #dde6f0; --muted: #556070;
+    }
+
+    body { background: var(--bg) !important; font-family: 'Nunito', sans-serif !important; color: var(--text) !important; }
+
+    /* Navbar */
+    .navbar { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; }
+    .navbar-brand { font-family: 'Syne', sans-serif !important; font-weight: 800 !important; color: var(--accent) !important; font-size: 1.1rem !important; }
+    .navbar-brand:hover { color: var(--accent) !important; }
+    .navbar-nav .nav-link { color: var(--muted) !important; font-weight: 500 !important; }
+    .navbar-nav .nav-link:hover, .navbar-nav .nav-link.active { color: var(--accent) !important; }
+    .navbar-nav .open > a, .navbar-nav .open > a:hover { color: var(--accent) !important; background: transparent !important; }
+    .dropdown-menu { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: 8px !important; }
+    .dropdown-item, .dropdown-menu > li > a { color: var(--text) !important; padding: 8px 16px !important; }
+    .dropdown-item:hover, .dropdown-menu > li > a:hover { background: rgba(0,212,255,0.08) !important; color: var(--accent) !important; }
+
+    /* Sidebar / content area */
+    .container-fluid { background: var(--bg) !important; }
+
+    /* Cards / panels */
+    .card, .panel, .panel-default { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: 12px !important; color: var(--text) !important; }
+    .panel-heading, .card-header { background: rgba(255,255,255,0.03) !important; border-bottom: 1px solid var(--border) !important; color: var(--text) !important; font-family: 'Syne', sans-serif !important; font-weight: 700 !important; }
+    .panel-body, .card-body { background: transparent !important; }
+
+    /* Tables */
+    .table { color: var(--text) !important; }
+    .table thead th { background: rgba(255,255,255,0.03) !important; border-color: var(--border) !important; color: var(--muted) !important; font-family: 'JetBrains Mono', monospace !important; font-size: 0.75rem !important; text-transform: uppercase !important; letter-spacing: 1px !important; }
+    .table tbody tr { border-color: var(--border) !important; }
+    .table tbody tr td { border-color: rgba(26,38,64,0.5) !important; color: var(--text) !important; vertical-align: middle !important; }
+    .table-striped tbody tr:nth-of-type(odd) { background: rgba(255,255,255,0.015) !important; }
+    .table-hover tbody tr:hover { background: rgba(0,212,255,0.04) !important; }
+    .table-bordered { border-color: var(--border) !important; }
+
+    /* Buttons */
+    .btn-primary { background: var(--accent) !important; border-color: var(--accent) !important; color: #000 !important; font-weight: 600 !important; border-radius: 7px !important; }
+    .btn-primary:hover { background: #00b8d9 !important; border-color: #00b8d9 !important; }
+    .btn-default, .btn-secondary { background: var(--surface) !important; border: 1px solid var(--border) !important; color: var(--text) !important; border-radius: 7px !important; }
+    .btn-default:hover { border-color: var(--accent) !important; color: var(--accent) !important; }
+    .btn-danger { background: rgba(239,68,68,0.15) !important; border-color: rgba(239,68,68,0.4) !important; color: var(--red) !important; border-radius: 7px !important; }
+    .btn-danger:hover { background: rgba(239,68,68,0.3) !important; }
+    .btn-success { background: rgba(16,185,129,0.15) !important; border-color: rgba(16,185,129,0.4) !important; color: var(--green) !important; border-radius: 7px !important; }
+    .btn-warning { background: rgba(245,158,11,0.15) !important; border-color: rgba(245,158,11,0.4) !important; color: var(--yellow) !important; border-radius: 7px !important; }
+
+    /* Forms */
+    .form-control, input, select, textarea {
+      background: var(--bg) !important; border: 1px solid var(--border) !important;
+      color: var(--text) !important; border-radius: 7px !important;
+      font-family: 'Nunito', sans-serif !important;
+    }
+    .form-control:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 3px rgba(0,212,255,0.1) !important; }
+    .control-label, label { color: var(--muted) !important; font-size: 0.8rem !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; }
+
+    /* Pagination */
+    .pagination > li > a { background: var(--surface) !important; border-color: var(--border) !important; color: var(--text) !important; }
+    .pagination > li > a:hover { background: rgba(0,212,255,0.08) !important; color: var(--accent) !important; border-color: var(--accent) !important; }
+    .pagination > .active > a { background: var(--accent) !important; border-color: var(--accent) !important; color: #000 !important; }
+
+    /* Alerts */
+    .alert-success { background: rgba(16,185,129,0.1) !important; border-color: var(--green) !important; color: #6ee7b7 !important; border-radius: 8px !important; }
+    .alert-danger  { background: rgba(239,68,68,0.1)  !important; border-color: var(--red)   !important; color: #fca5a5 !important; border-radius: 8px !important; }
+    .alert-info    { background: rgba(0,212,255,0.08) !important; border-color: var(--accent) !important; color: var(--accent) !important; border-radius: 8px !important; }
+
+    /* Filters sidebar */
+    .filters-block, .well { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: 10px !important; }
+
+    /* Back to site link */
+    .navbar-right .nav-link, .navbar-right a { color: var(--muted) !important; }
+    .navbar-right .nav-link:hover, .navbar-right a:hover { color: var(--accent) !important; }
+
+    /* Checkboxes */
+    .glyphicon-ok::before { color: var(--green) !important; }
+    .glyphicon-remove::before { color: var(--red) !important; }
+    input[type=checkbox] { accent-color: var(--accent); }
+  </style>
+{% endblock %}
+
+{% block nav_bar %}
+<nav class="navbar navbar-expand-lg" style="background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px;">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/admin/">🛠️ LearnTrack Admin</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav">
+      <span style="color:var(--muted)">☰</span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="adminNav">
+      <ul class="navbar-nav me-auto">
+        {% for item in admin_view.admin.menu() %}
+          {% if item.is_category() %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">{{ item.name }}</a>
+            <ul class="dropdown-menu">
+              {% for child in item.get_children() %}
+                {% if child.is_accessible() %}
+                <li><a class="dropdown-item" href="{{ child.url }}">{{ child.name }}</a></li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </li>
+          {% elif item.is_accessible() %}
+          <li class="nav-item">
+            <a class="nav-link {% if item.is_active() %}active{% endif %}" href="{{ item.url }}">{{ item.name }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/" style="color:var(--muted)">← Back to App</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/logout" style="color:var(--red)">Logout</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endblock %}

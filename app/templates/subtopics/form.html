@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{% if subtopic %}Edit Subtopic{% else %}Add Subtopic{% endif %}{% endblock %}
+{% block page_title %}{% if subtopic %}Edit Subtopic{% else %}Add Subtopic to "{{ topic.name }}"{% endif %}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('subjects.index') }}">Subjects</a> /
+  <a href="{{ url_for('subjects.detail', id=topic.subject_id) }}">{{ topic.subject.name }}</a> /
+  <a href="{{ url_for('topics.detail', id=topic.id) }}">{{ topic.name }}</a> /
+  {% if subtopic %}Edit{% else %}New Subtopic{% endif %}
+{% endblock %}
+{% block content %}
+<div style="max-width:640px">
+  <div class="card">
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group"><label>Subtopic Name *</label><input type="text" name="name" value="{{ subtopic.name if subtopic else '' }}" required autofocus placeholder="e.g. Parameters, Return Values…"></div>
+      <div class="form-group">
+        <label>Notes & Resources</label>
+        <div class="tab-bar">
+          <button type="button" class="tab-btn active" onclick="switchTab(this,'text')">📄 Text Notes</button>
+          <button type="button" class="tab-btn" onclick="switchTab(this,'pdf')">📎 PDFs</button>
+        </div>
+        <div class="tab-panel active" id="panel-text">
+          <textarea name="notes" placeholder="Notes for this subtopic…">{{ subtopic.notes if subtopic else '' }}</textarea>
+        </div>
+        <div class="tab-panel" id="panel-pdf">
+          {% if subtopic and subtopic.pdfs %}
+          <div style="margin-bottom:12px">
+            {% for pdf in subtopic.pdfs %}
+            <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px">
+              <span>📕</span><span style="flex:1;font-size:.82rem">{{ pdf.label }}</span>
+              <a href="{{ url_for('subtopics.view_pdf', pdf_id=pdf.id) }}" target="_blank" class="btn btn-xs btn-secondary">View</a>
+              <button type="button"
+                      onclick="deletePDF({{ pdf.id }})"
+                      class="btn btn-xs btn-danger btn-icon">
+                🗑️
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div style="border:2px dashed var(--border);border-radius:10px;padding:22px;text-align:center;cursor:pointer" onclick="document.getElementById('pdfInput').click()">
+            <input type="file" name="pdfs" id="pdfInput" multiple accept=".pdf" style="display:none" onchange="handleFiles(this.files)">
+            <div style="font-size:1.6rem;margin-bottom:5px">📎</div>
+            <div style="font-weight:600;margin-bottom:2px">Click to upload PDFs</div>
+            <div style="font-size:.75rem;color:var(--muted)">PDF only · Max 16MB each</div>
+          </div>
+          <div id="fileList" style="margin-top:10px"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn btn-primary">{% if subtopic %}Save Changes{% else %}Add Subtopic{% endif %}</button>
+        <a href="{{ url_for('topics.detail', id=topic.id) }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function switchTab(btn,tab){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('panel-'+tab).classList.add('active');}
+
+function deletePDF(pdfId){
+
+  if(!confirm("Delete this PDF?")) return;
+
+  fetch(`/subtopics/pdf/${pdfId}/delete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  }).then(()=>{
+      location.reload();
+  });
+}
+
+let files=[];
+function handleFiles(fl){for(let f of fl){if(f.name.endsWith('.pdf'))files.push(f);}const list=document.getElementById('fileList');list.innerHTML=files.map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px"><span>📕</span><span style="flex:1;font-size:.82rem">${f.name}</span><input type="text" name="pdf_labels" value="${f.name.replace('.pdf','')}" style="width:120px;padding:4px 8px;font-size:.78rem;margin-bottom:0"><button type="button" onclick="files.splice(${i},1);handleFiles([])" style="background:none;border:none;color:var(--red);cursor:pointer">✕</button></div>`).join('');const dt=new DataTransfer();files.forEach(f=>dt.items.add(f));document.getElementById('pdfInput').files=dt.files;}
+</script>
+{% endblock %}

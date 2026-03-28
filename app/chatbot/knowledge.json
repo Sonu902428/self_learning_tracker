@@ -1,0 +1,47 @@
+
+
+
+
+
+
+
+{
+ "intents":[
+  {
+   "tag":"add_subject",
+   "patterns":[
+    "how to add subject",
+    "create subject",
+    "add subject"
+   ],
+   "response":"Go to Subjects page and click + Add Subject."
+  },
+  {
+   "tag":"add_topic",
+   "patterns":[
+    "how to add topic",
+    "create topic",
+    "add topic"
+   ],
+   "response":"Open a subject and click + Add Topic."
+  },
+  {
+   "tag":"upload_pdf",
+   "patterns":[
+    "upload pdf",
+    "add pdf",
+    "attach pdf"
+   ],
+   "response":"Edit topic and upload PDF in resources section."
+  },
+  {
+   "tag":"system",
+   "patterns":[
+    "what is learntrack",
+    "about this system",
+    "what does this app do"
+   ],
+   "response":"LearnTrack is a learning tracker that manages subjects, topics, resources and mock tests."
+  }
+ ]
+}

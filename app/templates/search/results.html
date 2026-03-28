@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block page_title %}Search{% endblock %}
+{% block breadcrumb %}{% if q %}Results for "{{ q }}"{% else %}Search subjects, topics, subtopics{% endif %}{% endblock %}
+
+{% block content %}
+<div style="max-width:700px">
+  <div class="card" style="margin-bottom:20px">
+    <form method="GET" action="{{ url_for('search.search') }}" style="display:flex;gap:10px">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search subjects, topics, subtopics…" autofocus style="flex:1">
+      <button type="submit" class="btn btn-primary">🔍 Search</button>
+    </form>
+  </div>
+
+  {% if q %}
+    {% if results %}
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;font-family:'JetBrains Mono',monospace">{{ results|length }} result(s) for "{{ q }}"</div>
+    {% for r in results %}
+    <a href="{{ r.url }}" {% if r.type=="TopicPDF" %} target="_blank" {% endif %} style="display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;text-decoration:none;color:var(--text);transition:all .2s;border-left:3px solid {{ r.color }}" onmouseover="this.style.borderColor='{{ r.color }}';this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.borderColor='{{ r.color }}';this.style.background='var(--surface)'">
+      <span style="font-size:.7rem;font-family:'JetBrains Mono',monospace;padding:3px 9px;border-radius:10px;background:rgba(0,212,255,.08);color:var(--accent);border:1px solid rgba(0,212,255,.2);flex-shrink:0">{{ r.type }}</span>
+      <span style="font-weight:700;flex:1">{{ r.name }}</span>
+      {% if r.parent %}<span style="font-size:.78rem;color:var(--muted)">{{ r.parent }}</span>{% endif %}
+      <span style="color:var(--muted);font-size:.9rem">→</span>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:2rem;margin-bottom:10px">🔍</div>
+      <div>No results found for "<b>{{ q }}</b>"</div>
+    </div>
+    {% endif %}
+  {% else %}
+  <div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+    <div style="font-size:2rem;margin-bottom:10px">🔍</div>
+    <div>Type something to search across all subjects, topics and subtopics.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

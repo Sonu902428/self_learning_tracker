@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+
+
+
+{% block content %}
+<!-- Subject header -->
+
+
+
+
+{% if data %}
+
+<div class="card" style="padding:0;overflow:hidden">
+  <table>
+    <thead>
+      <tr>
+        <th>Topic</th>
+        <th>Progress</th>
+        <th>Go Through</th>
+        <th>Practice</th>
+        <th>Mock</th>
+        <th>Confidence</th>
+        <th>Subtopics</th>
+        <th style="text-align:right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for topic in data %}
+      <tr>
+        <td>
+          <a href="{{ url_for('topics.detail', id=topic.id) }}" style="font-weight:700;color:var(--text);text-decoration:none;font-size:.9rem">{{ topic.name }}</a>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="progress-bar" style="width:80px">
+              <div class="progress-fill" style="width:{{ topic.progress_percent }}%"></div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);white-space:nowrap">{{ topic.progress_percent }}%</span>
+          </div>
+        </td>
+        <td>
+          {% if topic.has_subtopics %}
+            <span style="font-size:.75rem;color:var(--muted)">via subtopics</span>
+          {% else %}
+          <form method="POST" action="{{ url_for('topics.toggle_go_through', id=topic.id) }}" style="display:inline">
+            <button type="submit" class="btn btn-xs {% if topic.go_through %}btn-success{% else %}btn-secondary{% endif %}">
+              {% if topic.go_through %}✅{% else %}⬜{% endif %}
+            </button>
+          </form>
+          {% endif %}
+        </td>
+        <td>
+          {% if not topic.has_subtopics %}
+          <form method="POST" action="{{ url_for('topics.toggle_practice', id=topic.id) }}" style="display:inline">
+            <button type="submit" class="btn btn-xs {% if topic.practiced %}btn-warning{% else %}btn-secondary{% endif %}"
+                    {% if not topic.go_through %}disabled{% endif %}>
+              {% if topic.practiced %}🏋️{% else %}⬜{% endif %}
+            </button>
+          </form>
+          {% else %}
+            <span style="font-size:.75rem;color:var(--muted)">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if topic.mock_done %}
+            <span class="badge badge-covered">🎯 Done</span>
+          {% elif topic.practiced %}
+            <a href="{{ url_for('topics.detail', id=topic.id) }}" class="badge badge-practiced">🎯 Attempt</a>
+          {% else %}
+            <span class="badge badge-pending">🔒</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if topic.confidence_level %}
+            <span class="conf conf-{{ topic.confidence_level[1] }}">{{ topic.confidence_level[0] }}</span>
+          {% else %}
+            <span style="color:var(--muted);font-size:.75rem">—</span>
+          {% endif %}
+        </td>
+        <td>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted)">{{ topic.subtopics|length }}</span>
+        </td>
+        <td>
+          <div style="display:flex;gap:5px;justify-content:flex-end">
+            <a href="{{ url_for('topics.detail', id=topic.id) }}" class="btn btn-secondary btn-xs">👁️</a>
+            <a href="{{ url_for('topics.edit', id=topic.id) }}" class="btn btn-secondary btn-xs btn-icon">✏️</a>
+            <form method="POST" action="{{ url_for('topics.delete', id=topic.id) }}" onsubmit="return confirm('Delete topic?')">
+              <button type="submit" class="btn btn-danger btn-xs btn-icon">🗑️</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endif %}
+{% endblock %}
+
+
